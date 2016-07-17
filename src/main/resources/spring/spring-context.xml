@@ -8,9 +8,7 @@
 
 
 
-    <context:component-scan base-package="cc.moondust.message.netty">
-        <context:include-filter type="annotation" expression="cc.moondust.message.annotation.MessageSocket"/>
-    </context:component-scan>
+    <context:component-scan base-package="cc.moondust.message.netty"/>
 
     <bean id="cnf" class="org.springframework.beans.factory.config.PropertiesFactoryBean">
         <property name="locations">
@@ -19,10 +17,6 @@
             </list>
         </property>
     </bean>
-    <bean id="httpServerCodec" class="io.netty.handler.codec.http.HttpServerCodec"/>
-    <bean id="httpObjectAggregator" class="io.netty.handler.codec.http.HttpObjectAggregator">
-        <constructor-arg value="65536"/>
-    </bean>
-    <bean id="chunkedWriteHandler" class="io.netty.handler.stream.ChunkedWriteHandler"/>
+
 
 </beans>
