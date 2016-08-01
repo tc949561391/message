@@ -1,5 +1,6 @@
 package cc.moondust.message.netty;
 
+import cc.moondust.message.handlers.MessageSokectHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -16,7 +17,7 @@ import org.springframework.stereotype.Component;
 public class WebSocketInitializer extends ChannelInitializer<SocketChannel>{
 
     @Autowired
-    MessageSokectHandler  messageSokectHandler;
+    MessageSokectHandler messageSokectHandler;
 
 
 
