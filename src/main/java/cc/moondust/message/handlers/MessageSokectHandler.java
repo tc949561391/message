@@ -1,7 +1,11 @@
 package cc.moondust.message.handlers;
 
+import cc.moondust.message.repository.ChannelRepository;
+import cc.moondust.message.utils.JSONUtil;
 import cc.moondust.message.utils.ParamsUtil;
 import cc.moondust.message.utils.StringUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
@@ -11,6 +15,7 @@ import io.netty.handler.codec.http.websocketx.*;
 import io.netty.util.CharsetUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -27,14 +32,14 @@ import static io.netty.handler.codec.rtsp.RtspHeaderNames.HOST;
 @ChannelHandler.Sharable
 public class MessageSokectHandler extends SimpleChannelInboundHandler<Object> {
     private static final Logger logger = LoggerFactory.getLogger(MessageSokectHandler.class.getName());
-    Map<String, Channel> channelMaps = new HashMap<>();
 
-    @Value("#{cnf.messageserver_path}")
-    private String websocketPath;
+    private String websocketPath="";
 
     private WebSocketServerHandshaker handshaker;
 
-    private int count = 0;
+    @Autowired
+    ChannelRepository channelRepository;
+
 
 
     @Override
@@ -45,7 +50,7 @@ public class MessageSokectHandler extends SimpleChannelInboundHandler<Object> {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         // 移除
-        channelMaps.remove(ctx.channel());
+        channelRepository.removeChannelObj(ctx.channel());
     }
 
     @Override
@@ -86,12 +91,21 @@ public class MessageSokectHandler extends SimpleChannelInboundHandler<Object> {
         // 返回应答消息
         String request = ((TextWebSocketFrame) frame).text();
 
-        TextWebSocketFrame tws = new TextWebSocketFrame(new Date().toString()
-                + ctx.channel().id() + "：" + request);
         // 群发
-        channelMaps.get(request).writeAndFlush(tws);
-        // 返回【谁发的发给谁】
-        // ctx.channel().writeAndFlush(tws);
+        try {
+            Map<String, Object> map = JSONUtil.jsonToMap(JSON.parseObject(request));
+            String from=map.get("from").toString();
+            String to = map.get("to").toString();
+            String message = map.get("message").toString();
+            HashMap<String, String> res = new HashMap<>();
+            res.put("message",message);
+            res.put("from",from);
+            String tomessage = JSONUtil.objectToJsonStr(res);
+            TextWebSocketFrame tws = new TextWebSocketFrame(tomessage);
+            channelRepository.getChannel(to).writeAndFlush(tws);
+        } catch (Exception e) {
+
+        }
     }
 
     private void handleHttpRequest(ChannelHandlerContext ctx,
@@ -122,7 +136,7 @@ public class MessageSokectHandler extends SimpleChannelInboundHandler<Object> {
             handshaker.handshake(localChannel, req);
             if (localChannel.isActive()) {
                 // 添加
-                channelMaps.put(access_token, localChannel);
+                channelRepository.saveChannel(access_token, localChannel);
             }
         }
     }

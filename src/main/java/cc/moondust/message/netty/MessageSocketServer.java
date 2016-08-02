@@ -20,8 +20,7 @@ public class MessageSocketServer {
     @Autowired
     private WebSocketInitializer webSocketInitializer;
 
-    @Value("#{cnf.messageserver_port}")
-    private int port;
+    private int port=80;
 
     public void run() {
 
